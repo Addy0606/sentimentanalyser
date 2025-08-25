@@ -1,0 +1,21 @@
+# Virtual environment
+sentimentanalyser-venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables / secrets
+.env
+
+# Data folder (optional if too large)
+data/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE / editor files
+.vscode/
+*.sublime-project
+*.sublime-workspace
