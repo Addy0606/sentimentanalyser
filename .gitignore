@@ -19,3 +19,4 @@ data/
 .vscode/
 *.sublime-project
 *.sublime-workspace
+.env
