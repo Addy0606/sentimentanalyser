@@ -21,9 +21,17 @@ def process_table(table_name, text_column, id_column):
     if df.empty:
         print(f"No rows in {table_name} to process.")
         return
-    # Combine title and selftext
-    df["combined_text"] = df["title"].fillna("") + " " + df["selftext"].fillna("")
-    df["sentiment"] = df["combined_text"].apply(analyze_sentiment) 
+    
+    # Combine text depending on table
+    if table_name == "reddit_posts":
+        df["combined_text"] = df["title"].fillna("") + " " + df["selftext"].fillna("")
+    elif table_name == "news_posts":
+        df["combined_text"] = df["title"].fillna("") + " " + df["description"].fillna("")
+    else:
+        df["combined_text"] = df[text_column].fillna("")
+    
+    df["sentiment"] = df["combined_text"].apply(analyze_sentiment)
+    
     # Update database with new sentiment scores
     with engine.begin() as conn:  # automatically handles transaction
         for _, row in df.iterrows():
@@ -33,6 +41,7 @@ def process_table(table_name, text_column, id_column):
                 WHERE {id_column} = :row_id
             """)
             conn.execute(stmt, {"sentiment": row["sentiment"], "row_id": row[id_column]})
+    
     print(f"✅ Sentiment analysis completed for {table_name}.")
 def get_label(score):
         if score > 0:
@@ -41,8 +50,8 @@ def get_label(score):
             return "Negative"
         else:
             return "Neutral"
-def keyword_sentiment_summary():
-    query = """
+def keyword_sentiment_summary(table_name="reddit_posts"):
+    query = f"""
     SELECT 
         keyword,
         COUNT(*) AS post_count,
@@ -50,12 +59,12 @@ def keyword_sentiment_summary():
         SUM(CASE WHEN label = 'Positive' THEN 1 ELSE 0 END) AS positive_count,
         SUM(CASE WHEN label = 'Negative' THEN 1 ELSE 0 END) AS negative_count,
         SUM(CASE WHEN label = 'Neutral' THEN 1 ELSE 0 END) AS neutral_count
-    FROM reddit_posts
+    FROM {table_name}
     GROUP BY keyword
     ORDER BY post_count DESC;
     """
     df = pd.read_sql(query, engine)
-    print("\n📊 Sentiment summary per keyword:\n")
+    print(f"\n📊 Sentiment summary per keyword for {table_name}:\n")
     print(df.to_string(index=False))
 if __name__ == "__main__":
     process_table("reddit_posts", "combined_text", "post_id")
@@ -72,5 +81,21 @@ if __name__ == "__main__":
                 """)
                 conn.execute(stmt, {"label": row["label"], "row_id": row["post_id"]})
         print("✅ Sentiment labels added to reddit_posts.")
-    keyword_sentiment_summary()
+    keyword_sentiment_summary("reddit_posts")
+    process_table("news_posts", "combined_text", "id")  # 'id' is PK in news_posts
+    # Add sentiment labels after sentiment scores have been updated
+    df = pd.read_sql("SELECT id, sentiment FROM news_posts;", engine)
+    if not df.empty:
+        df["label"] = df["sentiment"].apply(get_label)
+        with engine.begin() as conn:
+            for _, row in df.iterrows():
+                stmt = text("""
+                    UPDATE news_posts
+                    SET label = :label
+                    WHERE id = :row_id
+                """)
+                conn.execute(stmt, {"label": row["label"], "row_id": row["id"]})
+        print("✅ Sentiment labels added to news_posts.")
+    keyword_sentiment_summary("news_posts")
+    
 
