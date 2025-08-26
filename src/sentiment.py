@@ -1,5 +1,5 @@
-# src/sentiment.py
 import os
+from sqlalchemy import text
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
@@ -33,7 +33,44 @@ def process_table(table_name, text_column, id_column):
                 WHERE {id_column} = :row_id
             """)
             conn.execute(stmt, {"sentiment": row["sentiment"], "row_id": row[id_column]})
-
     print(f"✅ Sentiment analysis completed for {table_name}.")
+def get_label(score):
+        if score > 0:
+            return "Positive"
+        elif score < 0:
+            return "Negative"
+        else:
+            return "Neutral"
+def keyword_sentiment_summary():
+    query = """
+    SELECT 
+        keyword,
+        COUNT(*) AS post_count,
+        AVG(sentiment) AS avg_sentiment,
+        SUM(CASE WHEN label = 'Positive' THEN 1 ELSE 0 END) AS positive_count,
+        SUM(CASE WHEN label = 'Negative' THEN 1 ELSE 0 END) AS negative_count,
+        SUM(CASE WHEN label = 'Neutral' THEN 1 ELSE 0 END) AS neutral_count
+    FROM reddit_posts
+    GROUP BY keyword
+    ORDER BY post_count DESC;
+    """
+    df = pd.read_sql(query, engine)
+    print("\n📊 Sentiment summary per keyword:\n")
+    print(df.to_string(index=False))
 if __name__ == "__main__":
     process_table("reddit_posts", "combined_text", "post_id")
+    # Add sentiment labels after sentiment scores have been updated
+    df = pd.read_sql("SELECT post_id, sentiment FROM reddit_posts;", engine)
+    if not df.empty:
+        df["label"] = df["sentiment"].apply(get_label)
+        with engine.begin() as conn:
+            for _, row in df.iterrows():
+                stmt = text("""
+                    UPDATE reddit_posts
+                    SET label = :label
+                    WHERE post_id = :row_id
+                """)
+                conn.execute(stmt, {"label": row["label"], "row_id": row["post_id"]})
+        print("✅ Sentiment labels added to reddit_posts.")
+    keyword_sentiment_summary()
+
