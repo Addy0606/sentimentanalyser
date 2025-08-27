@@ -1,6 +1,73 @@
-📊 Sentiment Analyser
+📊 Sentiment Analyser Dashboard
+Overview:
 
-A real-time dashboard that fetches Reddit posts and News articles for stock-related keywords, performs sentiment analysis, and visualizes trends across sources.
+The Sentiment Analyser Dashboard is a data-driven web application built with Streamlit that collects Reddit posts and news articles, performs sentiment analysis, and provides interactive visualizations to help users understand market sentiment around specific keywords.
+
+Users can:
+
+Fetch Reddit and news data for selected keywords.
+
+Analyze sentiment (positive, negative, neutral) using NLP techniques.
+
+Visualize trends through charts, tables, and summaries.
+
+Customize analysis by adding their own keywords dynamically.
+
+This project demonstrates the integration of data collection, storage, processing, visualization, and interactivity in a seamless workflow.
+
+✨ Key Features
+
+🔍 Keyword-based sentiment analysis on Reddit + news data.
+
+📥 Automatic data fetching from Reddit & news APIs.
+
+📊 Interactive visualizations (bar charts, tables, sentiment summaries).
+
+📝 User-defined keywords via Streamlit UI.
+
+🗄 Persistent storage using PostgreSQL.
+
+⚡ Fast and lightweight dashboard powered by Streamlit.
+
+🛠 Technologies Used:
+Frontend / Dashboard:
+
+Streamlit
+ → For building the interactive web UI.
+
+Backend & Data Collection:
+
+PRAW / Reddit API → To fetch Reddit posts.
+
+News API → To fetch latest news headlines.
+
+Requests → For making API calls.
+
+JSON → Handling API responses.
+
+Data Processing & Analysis
+
+Pandas → Data wrangling and summarization.
+
+NumPy → Numeric computations.
+
+VADER Sentiment Analyzer → Rule-based sentiment classification.
+
+Database:
+
+PostgreSQL → Storing Reddit + news posts and sentiment results.
+
+SQLAlchemy → ORM for database interaction.
+
+Visualization:
+
+Matplotlib / Plotly → Charts and graphs.
+
+Streamlit Tables / DataFrames → Interactive data exploration.
+
+Environment & Project Structure:
+
+Python 3.10+
 
 🔹 Demo
 
