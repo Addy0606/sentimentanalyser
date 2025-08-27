@@ -158,3 +158,6 @@ sentimentanalyser/
 Free API limits: NewsAPI and Reddit API have request restrictions
 
 Ensure PostgreSQL is running and accessible before fetching data
+
+<img width="1901" height="856" alt="image" src="https://github.com/user-attachments/assets/61177316-3b7d-4456-9704-f2f90547b2a2" />
+
