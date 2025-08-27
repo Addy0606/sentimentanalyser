@@ -124,7 +124,9 @@ streamlit run src/app.py
 
 Open the URL displayed in the terminal (usually http://localhost:8501)
 
-Click "🔄 Fetch Latest Data" to fetch, analyze, and display data
+Add stocks/keywords as desired.
+
+Click "🔄 Fetch Latest Data" to fetch, analyze, and display data.
 
 📁 Project Structure
 sentimentanalyser/
