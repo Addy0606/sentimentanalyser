@@ -6,12 +6,13 @@ from fetchnews import fetch_news_articles
 from sentiment import process_table, get_label, keyword_sentiment_summary, engine
 from sqlalchemy import text
 st.set_page_config(
-    page_title="📊 Keyword Sentiment Dashboard",
+    page_title="📊 Stock Sentiment Analyser",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.title("📊 Keyword Sentiment Dashboard")
+st.title("📊 Stock Sentiment Analyser")
 st.write("Compare sentiment trends across **Reddit** and **News Articles** in real-time.")
+st.write("If the Average Sentiment column < 0, sentiment is negative. Around 0 is neutral, > 0 is positive.")
 if st.button("🔄 Fetch Latest Data"):
     progress = st.progress(0)
     status_text = st.empty()
