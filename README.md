@@ -161,5 +161,9 @@ Free API limits: NewsAPI and Reddit API have request restrictions
 
 Ensure PostgreSQL is running and accessible before fetching data
 
-<img width="1901" height="856" alt="image" src="https://github.com/user-attachments/assets/61177316-3b7d-4456-9704-f2f90547b2a2" />
+<img width="1917" height="854" alt="image" src="https://github.com/user-attachments/assets/0ea2fdda-7b4e-4c09-81a4-8fe1987c8df2" />
+
+<img width="1919" height="814" alt="image" src="https://github.com/user-attachments/assets/a218469a-416c-47c6-b844-328c7123a58b" />
+
+
 
