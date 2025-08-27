@@ -1,4 +1,4 @@
-📊 Sentiment Analyser\n
+📊 Sentiment Analyser
 A real-time dashboard that fetches Reddit posts and News articles for stock-related keywords, performs sentiment analysis, and visualizes trends across sources.
 
 Demo
@@ -123,4 +123,5 @@ sentimentanalyser/
 Notes
 Free API limits: NewsAPI and Reddit API have request restrictions.
 Make sure PostgreSQL is running and accessible.
+
 
