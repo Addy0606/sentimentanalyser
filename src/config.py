@@ -5,11 +5,7 @@ STOCK_KEYWORDS = [
     "SBI", "Adani", "Wipro", "HCLTech", "Asian Paints",
     "Kotak Mahindra", "Bajaj Finance", "LTIMindtree", "ITC"
 ]
-
 REDDIT_SUBREDDITS = [
     "IndianStockMarket", "stocks", "investing", "finance",
     "StockMarketIndia", "IndianEconomy"
 ]
-
-
-TWITTER_LANG = "en"
