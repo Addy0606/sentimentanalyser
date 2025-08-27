@@ -50,7 +50,7 @@ def get_label(score):
             return "Negative"
         else:
             return "Neutral"
-def keyword_sentiment_summary(table_name="reddit_posts"):
+def keyword_sentiment_summary(table_name="reddit_posts", source=None):
     query = f"""
     SELECT 
         keyword,
@@ -64,8 +64,11 @@ def keyword_sentiment_summary(table_name="reddit_posts"):
     ORDER BY post_count DESC;
     """
     df = pd.read_sql(query, engine)
-    print(f"\n📊 Sentiment summary per keyword for {table_name}:\n")
-    print(df.to_string(index=False))
+    
+    if source:
+        df["source"] = source
+    
+    return df
 if __name__ == "__main__":
     process_table("reddit_posts", "combined_text", "post_id")
     # Add sentiment labels after sentiment scores have been updated

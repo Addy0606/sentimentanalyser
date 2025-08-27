@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from praw import Reddit
-from src.config import STOCK_KEYWORDS, REDDIT_SUBREDDITS
+from config import STOCK_KEYWORDS, REDDIT_SUBREDDITS
 load_dotenv()
 # PostgreSQL Connection
 DB_USER = os.getenv("DB_USER")

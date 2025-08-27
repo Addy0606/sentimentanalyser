@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import requests
-from src.config import STOCK_KEYWORDS
+from config import STOCK_KEYWORDS
 
 load_dotenv()
 
