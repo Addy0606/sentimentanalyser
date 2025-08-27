@@ -5,6 +5,7 @@ from fetchreddit import fetch_reddit_posts
 from fetchnews import fetch_news_articles
 from sentiment import process_table, get_label, keyword_sentiment_summary, engine
 from sqlalchemy import text
+from config import STOCK_KEYWORDS
 st.set_page_config(
     page_title="📊 Stock Sentiment Analyser",
     layout="wide",
@@ -13,18 +14,34 @@ st.set_page_config(
 st.title("📊 Stock Sentiment Analyser")
 st.write("Compare sentiment trends across **Reddit** and **News Articles** in real-time.")
 st.write("If the Average Sentiment column < 0, sentiment is negative. Around 0 is neutral, > 0 is positive.")
+import streamlit as st
+from config import STOCK_KEYWORDS
+st.header("Add stocks/keywords")
+# Use a column to restrict width
+col1, col2, col3 = st.columns([1, 2, 1])  # middle column is wider
+with col1:
+    user_keywords = st.text_input(
+        "Enter comma-separated stocks/keywords",
+        value="",
+        max_chars=50  # limit number of characters
+    )
+if user_keywords:
+    keywords = STOCK_KEYWORDS + [kw.strip() for kw in user_keywords.split(",")]
+else:
+    keywords = STOCK_KEYWORDS
+st.write("Stock details being fetched:", keywords)
 if st.button("🔄 Fetch Latest Data"):
     progress = st.progress(0)
     status_text = st.empty()
     try:
         # Step 1: Fetch Reddit
         status_text.text("Fetching Reddit posts...")
-        fetch_reddit_posts(limit=10)
+        fetch_reddit_posts(keywords=keywords,limit=10)
         progress.progress(20)
         time.sleep(0.5)
         # Step 2: Fetch News
         status_text.text("Fetching News articles...")
-        fetch_news_articles(limit_per_keyword=10)
+        fetch_news_articles(keywords=keywords,limit_per_keyword=10)
         progress.progress(40)
         time.sleep(0.5)
         # Step 3: Sentiment analysis - Reddit

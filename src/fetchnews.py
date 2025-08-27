@@ -44,10 +44,12 @@ def insert_df_to_db(df, table_name):
 
     print(f"✅ Inserted {inserted} rows, skipped {skipped} duplicates or errors.")
 
-def fetch_news_articles(limit_per_keyword=10):
+def fetch_news_articles(keywords=None,limit_per_keyword=10):
     all_articles = []
-
-    for keyword in STOCK_KEYWORDS:
+    if keywords is None:
+        from config import STOCK_KEYWORDS
+        keywords=STOCK_KEYWORDS
+    for keyword in keywords:
         print(f"📥 Fetching news for '{keyword}'...")
         params = {
             "q": keyword,

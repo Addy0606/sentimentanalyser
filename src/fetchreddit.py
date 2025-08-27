@@ -42,12 +42,15 @@ def insert_df_to_db(df, table_name):
     
     print(f"✅ Inserted {inserted} rows, skipped {skipped} duplicates or errors.")
 # Fetch Reddit Posts
-def fetch_reddit_posts(limit=10):
+def fetch_reddit_posts(keywords=None,limit=10):
+    if keywords is None:
+        from config import STOCK_KEYWORDS
+        keywords=STOCK_KEYWORDS
     count=0
     maxposts=10
     all_posts = []
     for subreddit in REDDIT_SUBREDDITS:
-        for keyword in STOCK_KEYWORDS:
+        for keyword in keywords:
             print(f"📥 Fetching posts for '{keyword}' from r/{subreddit}...")
             for post in reddit.subreddit(subreddit).search(keyword, limit=limit):
                 all_posts.append({
