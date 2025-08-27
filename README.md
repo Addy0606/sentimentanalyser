@@ -69,13 +69,21 @@ pip install -r requirements.txt
 Create a .env file in the main project directory with:
 
 DB_USER=your_postgres_user
+
 DB_PASSWORD=your_postgres_password
+
 DB_HOST=localhost
+
 DB_PORT=5432
+
 DB_NAME=your_db_name
+
 REDDIT_CLIENT_ID=your_reddit_client_id
+
 REDDIT_CLIENT_SECRET=your_reddit_client_secret
+
 REDDIT_USER_AGENT=your_reddit_user_agent
+
 NEWS_API_KEY=your_newsapi_key
 
 8. Create PostgreSQL tables
@@ -121,17 +129,28 @@ Click "🔄 Fetch Latest Data" to fetch, analyze, and display data
 📁 Project Structure
 sentimentanalyser/
 │
+
 ├─ src/
+
 │   ├─ __init__.py
+
 │   ├─ app.py            # Streamlit dashboard
+
 │   ├─ fetchreddit.py    # Reddit fetching module
+
 │   ├─ fetchnews.py      # NewsAPI fetching module
+
 │   ├─ sentiment.py      # Sentiment analysis & summary
+
 │   └─ config.py         # Keywords and subreddits
+
 │
 ├─ .env                  # Environment variables (not in repo)
+
 ├─ .gitignore
+
 ├─ requirements.txt      # Python dependencies
+
 └─ README.md
 
 ⚠️ Notes
@@ -139,3 +158,6 @@ sentimentanalyser/
 Free API limits: NewsAPI and Reddit API have request restrictions
 
 Ensure PostgreSQL is running and accessible before fetching data
+
+<img width="1901" height="856" alt="image" src="https://github.com/user-attachments/assets/61177316-3b7d-4456-9704-f2f90547b2a2" />
+
