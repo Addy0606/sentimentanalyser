@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 import pandas as pd
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY","AIzaSyB25kdhoc_KAfPF4_TOEyK96MoX0Y3LxJE"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 def get_gemini_summary_from_combined(combined_df: pd.DataFrame, keywords: list[str]):
     """

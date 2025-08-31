@@ -133,6 +133,5 @@ else:
     keywords_to_analyze = [k.strip() for k in user_pick.split(",") if k.strip()]
 ai_summary, sentiment_data= get_gemini_summary_from_combined(combined_df, keywords_to_analyze)
 st.subheader("🤖 AI Summary of Selected Stocks")
-
 st.write(ai_summary.replace("\\n", "\n"))
 
