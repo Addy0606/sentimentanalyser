@@ -5,7 +5,10 @@ from fetchreddit import fetch_reddit_posts
 from fetchnews import fetch_news_articles
 from sentiment import process_table, get_label, keyword_sentiment_summary, engine
 from sqlalchemy import text
+from hf_utils import get_gemini_summary_from_combined
 from config import STOCK_KEYWORDS
+from transformers import pipeline
+summarizer = pipeline("text2text-generation", model="google/flan-t5-base")
 st.set_page_config(
     page_title="📊 Stock Sentiment Analyser",
     layout="wide",
@@ -18,13 +21,14 @@ import streamlit as st
 from config import STOCK_KEYWORDS
 st.header("Add stocks/keywords")
 # Use a column to restrict width
-col1, col2, col3 = st.columns([1, 2, 1])  # middle column is wider
+col1, col2, col3 = st.columns([1, 2, 1]) 
 with col1:
     user_keywords = st.text_input(
         "Enter comma-separated stocks/keywords",
         value="",
         max_chars=50  # limit number of characters
     )
+
 if user_keywords:
     keywords = STOCK_KEYWORDS + [kw.strip() for kw in user_keywords.split(",")]
 else:
@@ -116,4 +120,19 @@ else:
     ].set_index("keyword")
     st.bar_chart(chart_df)
 st.markdown("---")
+col1, col2, col3 = st.columns([1, 2, 1])
+with col1:
+    user_pick = st.text_input(
+        "Enter stocks for AI overview (comma separated) or 'all'",
+        value="all",
+        max_chars=100
+    )
+if user_pick.strip().lower() == "all":
+    keywords_to_analyze = ["all"]
+else:
+    keywords_to_analyze = [k.strip() for k in user_pick.split(",") if k.strip()]
+ai_summary, sentiment_data= get_gemini_summary_from_combined(combined_df, keywords_to_analyze)
+st.subheader("🤖 AI Summary of Selected Stocks")
+
+st.write(ai_summary.replace("\\n", "\n"))
 
