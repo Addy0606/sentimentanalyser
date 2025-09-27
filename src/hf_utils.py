@@ -1,8 +1,9 @@
 import os
 import google.generativeai as genai
 import pandas as pd
+from google.generativeai import list_models 
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 def get_gemini_summary_from_combined(combined_df: pd.DataFrame, keywords: list[str]):
     """
     Use Gemini to generate financial sentiment summaries based on combined Reddit & News data.
@@ -51,3 +52,5 @@ def get_gemini_summary_from_combined(combined_df: pd.DataFrame, keywords: list[s
 
     response = model.generate_content(prompt)
     return response.text, sentiment_data
+for m in list_models():
+    print(m.name, m.supported_generation_methods)
