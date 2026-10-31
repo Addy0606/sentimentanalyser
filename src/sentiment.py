@@ -4,12 +4,18 @@ import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-load_dotenv()
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+# Ensure .env is loaded regardless of current working directory
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+else:
+    load_dotenv()
+
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
+DB_NAME = os.getenv("DB_NAME", "sentimentanalyser")
 engine = create_engine(f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}", future=True)
 analyzer = SentimentIntensityAnalyzer()
 def analyze_sentiment(text):
@@ -43,6 +49,26 @@ def process_table(table_name, text_column, id_column):
             conn.execute(stmt, {"sentiment": row["sentiment"], "row_id": row[id_column]})
     
     print(f"✅ Sentiment analysis completed for {table_name}.")
+
+    # AWS DynamoDB Live Stream Hook (Triggers DynamoDB Streams -> AWS Lambda)
+    try:
+        from aws_dynamodb_service import batch_publish_sentiment_events
+        events = []
+        source_name = "reddit" if "reddit" in table_name else "news"
+        for _, row in df.iterrows():
+            events.append({
+                "ticker": row.get("keyword", "NIFTY50"),
+                "source": source_name,
+                "title": row.get("title", ""),
+                "sentiment": row["sentiment"],
+                "label": get_label(row["sentiment"]),
+                "url": row.get("url", "")
+            })
+        published = batch_publish_sentiment_events(events)
+        if published > 0:
+            print(f"⚡ Streamed {published} events to Amazon DynamoDB 'StockSentiment-LiveFeed'.")
+    except Exception as ddb_err:
+        pass
 def get_label(score):
         if score > 0:
             return "Positive"

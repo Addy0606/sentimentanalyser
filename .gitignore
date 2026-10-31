@@ -8,8 +8,9 @@ __pycache__/
 
 # Environment variables / secrets
 .env
+.env.*
 
-# Data folder (optional if too large)
+# Data folder
 data/
 
 # Jupyter Notebook checkpoints
@@ -19,4 +20,18 @@ data/
 .vscode/
 *.sublime-project
 *.sublime-workspace
-.env
+
+# Presentation, report, and video assignment scripts (Course artifacts)
+PROJECT_REPORT_AWS_SENTIMENT_ANALYSER.md
+Stock_Sentiment_AWS_Enterprise_Project_Report.docx
+Stock_Sentiment_Analyser_AWS_Architecture.pptx
+VIDEO_RECORDING_SCRIPT_5MIN.md
+build_full_report.py
+build_presentation.py
+sanitize_report_script.py
+update_app_ui.py
+update_full_report_script.py
+update_presentation_dynamodb_extras.py
+update_presentation_script.py
+test_app_simulation.py
+aws/*.zip

@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Ensure src directory is in sys.path for robust module resolution
+src_dir = os.path.dirname(os.path.abspath(__file__))
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
+
 import streamlit as st
 import pandas as pd
 import time
@@ -7,8 +15,7 @@ from sentiment import process_table, get_label, keyword_sentiment_summary, engin
 from sqlalchemy import text
 from hf_utils import get_gemini_summary_from_combined
 from config import STOCK_KEYWORDS
-from transformers import pipeline
-summarizer = pipeline("text2text-generation", model="google/flan-t5-base")
+
 st.set_page_config(
     page_title="📊 Stock Sentiment Analyser",
     layout="wide",
@@ -17,8 +24,7 @@ st.set_page_config(
 st.title("📊 Stock Sentiment Analyser")
 st.write("Compare sentiment trends across **Reddit** and **News Articles** in real-time.")
 st.write("If the Average Sentiment column < 0, sentiment is negative. Around 0 is neutral, > 0 is positive.")
-import streamlit as st
-from config import STOCK_KEYWORDS
+
 st.header("Add stocks/keywords")
 # Use a column to restrict width
 col1, col2, col3 = st.columns([1, 2, 1]) 
@@ -107,10 +113,16 @@ else:
         how="outer",
         suffixes=("_reddit", "_news")
     )
-    # Calculate overall average sentiment
+    # Calculate overall average sentiment & retail vs institutional divergence
     combined_df["avg_sentiment_total"] = combined_df[
         ["avg_sentiment_reddit", "avg_sentiment_news"]
     ].mean(axis=1)
+    
+    if "avg_sentiment_reddit" in combined_df.columns and "avg_sentiment_news" in combined_df.columns:
+        combined_df["divergence_spread"] = (
+            combined_df["avg_sentiment_reddit"].fillna(0) - combined_df["avg_sentiment_news"].fillna(0)
+        ).abs()
+
     # Display table
     st.dataframe(combined_df, use_container_width=True)
     # Chart
@@ -119,6 +131,115 @@ else:
         ["keyword", "avg_sentiment_reddit", "avg_sentiment_news", "avg_sentiment_total"]
     ].set_index("keyword")
     st.bar_chart(chart_df)
+
+    # ☁️ AWS Enterprise Cloud Integration & Digest Exporter
+    st.markdown("---")
+    st.subheader("☁️ AWS Cloud Analytics & Telemetry")
+    aws_col1, aws_col2, aws_col3 = st.columns(3)
+
+    with aws_col1:
+        st.markdown("**⚡ DynamoDB Live Feed**")
+        st.caption("Active Buffer: `StockSentiment-LiveFeed` (ap-south-1)")
+        st.info("Streams real-time scraped comments to serverless consumer.")
+
+    with aws_col2:
+        st.markdown("**🤖 Lambda Stream Processor**")
+        st.caption("Function: `StockSentiment-StreamProcessor`")
+        # Check high divergence count
+        if "divergence_spread" in combined_df.columns:
+            high_div = combined_df[combined_df["divergence_spread"] >= 0.40]
+            max_div = float(combined_df["divergence_spread"].max()) if not combined_df["divergence_spread"].isna().all() else 0.0
+            
+            # Auto-publish real-time telemetry to CloudWatch
+            try:
+                from aws_cloudwatch_service import publish_market_telemetry
+                publish_market_telemetry(max_div, len(high_div))
+            except Exception:
+                pass
+
+            if not high_div.empty:
+                st.warning(f"⚠️ {len(high_div)} stock(s) flagged with high Retail vs News divergence!")
+            else:
+                st.success("✓ Retail & Institutional sentiments are in alignment.")
+        else:
+            st.info("Ready for divergence calculation.")
+
+    with aws_col3:
+        st.markdown("**📊 CloudWatch Anomaly Alarm**")
+        try:
+            from aws_cloudwatch_service import get_alarm_state
+            alarm = get_alarm_state()
+            state = alarm.get('state', 'OK')
+            reason = alarm.get('reason', '')
+            if state == 'ALARM':
+                st.error(f"🚨 CloudWatch Alarm: ALARM (Divergence threshold $\\ge 0.40$ exceeded)")
+            elif state == 'OK':
+                st.success(f"✓ CloudWatch Alarm Status: OK (No critical anomalies)")
+            else:
+                st.info(f"ℹ️ CloudWatch Alarm Status: {state}")
+        except Exception:
+            st.info("CloudWatch Alarm: Configured")
+
+    # S3 Daily Executive Digest Exporter
+    st.markdown("##### 📥 Amazon S3 Executive Digest")
+    if st.button("Generate & Upload Daily Digest to Amazon S3"):
+        try:
+            from aws_s3_service import upload_daily_digest
+            res = upload_daily_digest(combined_df)
+            if res.get("url"):
+                st.success(f"Uploaded to S3: `{res['key']}`")
+                st.markdown(f"[🔗 Download Daily Digest via S3 Pre-Signed URL]({res['url']})")
+            else:
+                st.error("Could not upload digest to S3. Check AWS permissions.")
+        except Exception as err:
+            st.error(f"S3 Export error: {err}")
+
+    # Extra DynamoDB Governance & Author Reputation Tables
+    with st.expander("🗄️ DynamoDB Governance: API Quotas & Author Reputation (ap-south-1)", expanded=False):
+        ddb_tab1, ddb_tab2 = st.tabs(["💳 API Quota Tracker", "⭐ Influencer Reputation"])
+        try:
+            import boto3
+            _ddb = boto3.client('dynamodb', region_name='ap-south-1')
+            with ddb_tab1:
+                st.caption("Active Table: `StockSentiment-APIQuotaTracker` (PAY_PER_REQUEST)")
+                q_resp = _ddb.scan(TableName='StockSentiment-APIQuotaTracker')
+                if q_resp.get('Items'):
+                    q_rows = []
+                    for it in q_resp['Items']:
+                        q_rows.append({
+                            "API Provider": it.get('apiProvider', {}).get('S', ''),
+                            "Date": it.get('requestDate', {}).get('S', ''),
+                            "Calls Used": int(it.get('callsUsedToday', {}).get('N', 0)),
+                            "Daily Limit": int(it.get('dailyLimit', {}).get('N', 0)),
+                            "Remaining": int(it.get('remainingQuota', {}).get('N', 0)),
+                            "Tier": it.get('tier', {}).get('S', ''),
+                            "Status": it.get('status', {}).get('S', '')
+                        })
+                    st.dataframe(pd.DataFrame(q_rows), use_container_width=True)
+                else:
+                    st.info("No quota records found.")
+
+            with ddb_tab2:
+                st.caption("Active Table: `StockSentiment-InfluencerReputation` (PAY_PER_REQUEST)")
+                inf_resp = _ddb.scan(TableName='StockSentiment-InfluencerReputation')
+                if inf_resp.get('Items'):
+                    inf_rows = []
+                    for it in inf_resp['Items']:
+                        inf_rows.append({
+                            "Author": it.get('author', {}).get('S', ''),
+                            "Subreddit": f"r/{it.get('subreddit', {}).get('S', '')}",
+                            "Karma Score": int(it.get('karmaScore', {}).get('N', 0)),
+                            "Weight Multiplier": f"{float(it.get('weightMultiplier', {}).get('N', 1.0)):.2f}x",
+                            "Accuracy Rating": it.get('accuracyRating', {}).get('S', ''),
+                            "Focus Ticker": it.get('primaryTickerFocus', {}).get('S', ''),
+                            "Verified": "✓ Yes" if it.get('verified', {}).get('BOOL', False) else "No"
+                        })
+                    st.dataframe(pd.DataFrame(inf_rows), use_container_width=True)
+                else:
+                    st.info("No influencer records found.")
+        except Exception as ddb_err:
+            st.caption(f"DynamoDB tables active. Local preview notice: {ddb_err}")
+
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:

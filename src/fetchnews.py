@@ -1,21 +1,29 @@
 # src/fetch_news.py
 import os
+import requests
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-import requests
-from config import STOCK_KEYWORDS
+try:
+    from config import STOCK_KEYWORDS
+except ModuleNotFoundError:
+    from src.config import STOCK_KEYWORDS
 
-load_dotenv()
+# Ensure .env is loaded regardless of current working directory
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+else:
+    load_dotenv()
 
 # PostgreSQL connection
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
+DB_NAME = os.getenv("DB_NAME", "sentimentanalyser")
 
 engine = create_engine(
     f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
@@ -36,11 +44,14 @@ def insert_df_to_db(df, table_name):
         try:
             row.to_frame().T.to_sql(table_name, engine, if_exists="append", index=False)
             inserted += 1
-        except IntegrityError:
+        except (IntegrityError, SQLAlchemyError):
             skipped += 1
-        except SQLAlchemyError as e:
-            print("Error inserting row:", e)
-            skipped += 1
+        except Exception as e:
+            if "duplicate key" in str(e).lower() or "unique constraint" in str(e).lower():
+                skipped += 1
+            else:
+                print("Error inserting row:", e)
+                skipped += 1
 
     print(f"✅ Inserted {inserted} rows, skipped {skipped} duplicates or errors.")
 
@@ -78,6 +89,15 @@ def fetch_news_articles(keywords=None,limit_per_keyword=10):
     df = pd.DataFrame(all_articles)
     insert_df_to_db(df, "news_posts")
     print(f"✅ News articles inserted (duplicates skipped).")
+
+    # AWS S3 Data Lake Archive Hook
+    try:
+        from aws_s3_service import archive_raw_payload
+        s3_key = archive_raw_payload("news", all_articles)
+        if s3_key:
+            print(f"☁️ Archived News payload to S3: {s3_key}")
+    except Exception as s3_err:
+        pass
 
 if __name__ == "__main__":
     fetch_news_articles(limit_per_keyword=10)
